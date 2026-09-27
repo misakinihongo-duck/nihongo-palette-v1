@@ -21,7 +21,13 @@ export async function fetchCurrentUserProfile(supabase: SupabaseClient) {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    return { user: null, profile: null, error: userError?.message ?? null };
+    const isMissingSession = userError?.message === "Auth session missing!";
+
+    return {
+      user: null,
+      profile: null,
+      error: isMissingSession ? null : userError?.message ?? null,
+    };
   }
 
   const { data, error } = await supabase
