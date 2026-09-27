@@ -1,14 +1,19 @@
 import Image from "next/image";
 import { AuthPanel } from "@/components/auth-panel";
+import { OnboardingFlow } from "@/components/onboarding-flow";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
-import { fetchCurrentUserProfile } from "@/lib/user-profile";
+import { fetchCurrentUserProfile, fetchOnboardingStatus } from "@/lib/user-profile";
 
 export default async function Home() {
   const config = getSupabaseConfig();
   const supabase = await createClient();
   const profileResult = supabase ? await fetchCurrentUserProfile(supabase) : null;
   const isSignedIn = Boolean(profileResult?.user);
+  const onboardingStatus =
+    supabase && profileResult?.user
+      ? await fetchOnboardingStatus(supabase, profileResult.user.id)
+      : null;
 
   return (
     <main className="min-h-screen bg-[#fbfaf7]">
@@ -23,7 +28,7 @@ export default async function Home() {
             width={224}
           />
           <span className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-            Sprint 1
+            Sprint 2
           </span>
         </header>
 
@@ -32,11 +37,10 @@ export default async function Home() {
             <div className="grid gap-4">
               <p className="text-sm font-semibold text-teal-700">Learn → Experience → Connect</p>
               <h1 className="max-w-3xl text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-                日本語を学び、体験し、人や地域とつながる入口を作っています。
+                あなたの目的に合う、日本語での時間をつくりましょう。
               </h1>
               <p className="max-w-2xl text-base leading-8 text-slate-700">
-                Notionの企画書・画面仕様書・DB設計書をSource of Truthとして、まずはSupabase接続、
-                Auth、User DB同期の最小縦切りを確認する画面です。
+                日本語を学ぶことから、体験や人とのつながりへ。まずはあなたに合う使い方を教えてください。
               </p>
             </div>
 
@@ -54,33 +58,24 @@ export default async function Home() {
             </div>
 
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-950">接続確認</h2>
+              <h2 className="text-lg font-bold text-slate-950">{isSignedIn ? "はじめましょう" : "接続確認"}</h2>
               <div className="mt-4 grid gap-3 text-sm leading-7 text-slate-700">
                 <p>
                   {isSignedIn
-                    ? `${profileResult?.user?.email ?? "ログインユーザー"}としてログインしています。`
+                    ? `${profileResult?.user?.email ?? "ログインユーザー"}としてログインしています。利用方法を選び、プロフィールを設定しましょう。`
                     : "Google認証を最終形にしつつ、Email/PasswordでもAuth → User → DBの疎通を確認できます。"}
                 </p>
                 {profileResult?.error ? (
                   <p className="rounded-md bg-rose-50 p-3 text-rose-800">{profileResult.error}</p>
                 ) : null}
-                {profileResult?.profile ? (
-                  <dl className="grid gap-2 rounded-md bg-slate-50 p-3">
-                    <div className="flex justify-between gap-4">
-                      <dt className="font-medium">Name</dt>
-                      <dd>{profileResult.profile.name}</dd>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <dt className="font-medium">Mode</dt>
-                      <dd>{profileResult.profile.last_active_mode}</dd>
-                    </div>
-                  </dl>
+                {profileResult?.profile && onboardingStatus ? (
+                  <OnboardingFlow profile={profileResult.profile} status={onboardingStatus} />
                 ) : null}
               </div>
             </section>
           </div>
 
-          <AuthPanel isConfigured={config.isConfigured} />
+          {!isSignedIn ? <AuthPanel isConfigured={config.isConfigured} /> : null}
         </section>
       </div>
       </main>

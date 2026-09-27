@@ -14,6 +14,11 @@ export type AppUserProfile = {
   updated_at: string;
 };
 
+export type OnboardingStatus = {
+  hasLearnerPreferences: boolean;
+  hasProviderProfile: boolean;
+};
+
 export async function fetchCurrentUserProfile(supabase: SupabaseClient) {
   const {
     data: { user },
@@ -80,4 +85,16 @@ export async function upsertUserProfile(supabase: SupabaseClient, user: User) {
   );
 
   return { error };
+}
+
+export async function fetchOnboardingStatus(supabase: SupabaseClient, userId: string) {
+  const [learnerResult, providerResult] = await Promise.all([
+    supabase.from("learner_preferences").select("id").eq("user_id", userId).maybeSingle(),
+    supabase.from("provider_profiles").select("id").eq("user_id", userId).maybeSingle(),
+  ]);
+
+  return {
+    hasLearnerPreferences: Boolean(learnerResult.data),
+    hasProviderProfile: Boolean(providerResult.data),
+  } satisfies OnboardingStatus;
 }
