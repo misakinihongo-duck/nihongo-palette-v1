@@ -163,6 +163,20 @@ alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
 alter table public.notifications enable row level security;
 
+-- SQL-created tables need explicit Data API privileges. RLS policies below
+-- remain the source of truth for which authenticated users can access rows.
+grant usage on schema public to authenticated;
+grant select, insert, update on public.users to authenticated;
+grant select, insert, update, delete on public.learner_preferences to authenticated;
+grant select, insert, update on public.provider_profiles to authenticated;
+grant select, insert, update on public.listings to authenticated;
+grant select on public.listing_images to authenticated;
+grant select on public.listing_schedules to authenticated;
+grant select, insert on public.bookings to authenticated;
+grant select on public.conversations to authenticated;
+grant select on public.messages to authenticated;
+grant select on public.notifications to authenticated;
+
 create policy "Users can read own user row" on public.users
   for select to authenticated
   using ((select auth.uid()) = id);
