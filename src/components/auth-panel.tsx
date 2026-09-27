@@ -45,7 +45,11 @@ export function AuthPanel({ isConfigured }: AuthPanelProps) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        });
         setMessage(
           signUpError
             ? signUpError.message
