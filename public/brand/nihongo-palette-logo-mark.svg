@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Nihongo Palette logo mark</title>
+  <desc id="desc">Two abstract rounded shapes in primary blue and coral forming a warm conversation palette mark.</desc>
+  <rect width="512" height="512" rx="112" fill="#FFFFFF"/>
+  <path d="M146 144C203 86 301 82 363 139C423 194 428 288 374 350C329 402 257 414 201 385L123 410L148 333C105 277 101 190 146 144Z" fill="#6E8FE8"/>
+  <path d="M212 207C253 166 324 164 369 204C414 244 420 314 381 361C348 401 292 412 250 392L190 411L209 351C176 311 177 241 212 207Z" fill="#F47A6A"/>
+  <circle cx="236" cy="276" r="18" fill="#FFFFFF"/>
+  <circle cx="291" cy="276" r="18" fill="#FFFFFF"/>
+  <path d="M233 324C255 342 292 342 316 322" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+</svg>
