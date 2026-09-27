@@ -1,10 +1,10 @@
 import Image from "next/image";
+import { AppWorkspace } from "@/components/app-workspace";
 import { AuthPanel } from "@/components/auth-panel";
 import { OnboardingFlow } from "@/components/onboarding-flow";
-import { ProviderServiceManager } from "@/components/provider-service-manager";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
-import { fetchCurrentUserProfile, fetchOnboardingStatus, fetchProviderListings } from "@/lib/user-profile";
+import { fetchCurrentUserProfile, fetchOnboardingStatus, fetchProviderListings, fetchPublishedListings } from "@/lib/user-profile";
 
 export default async function Home() {
   const config = getSupabaseConfig();
@@ -19,6 +19,7 @@ export default async function Home() {
     supabase && onboardingStatus?.providerProfileId
       ? await fetchProviderListings(supabase, onboardingStatus.providerProfileId)
       : null;
+  const publishedListings = supabase && profileResult?.user ? await fetchPublishedListings(supabase) : null;
 
   return (
     <main className="min-h-screen bg-[#fbfaf7]">
@@ -73,10 +74,13 @@ export default async function Home() {
                 {profileResult?.error ? (
                   <p className="rounded-md bg-rose-50 p-3 text-rose-800">{profileResult.error}</p>
                 ) : null}
-                {profileResult?.profile && onboardingStatus?.providerProfileId ? (
-                  <ProviderServiceManager
-                    listings={providerListings?.data ?? []}
+                {profileResult?.profile && onboardingStatus?.hasLearnerPreferences ? (
+                  <AppWorkspace
+                    canUseLearner={onboardingStatus.hasLearnerPreferences}
+                    initialMode={onboardingStatus.providerProfileId && profileResult.profile.last_active_mode === "provider" ? "provider" : "learner"}
+                    providerListings={providerListings?.data ?? []}
                     providerProfileId={onboardingStatus.providerProfileId}
+                    publishedListings={publishedListings?.data ?? []}
                   />
                 ) : profileResult?.profile && onboardingStatus ? (
                   <OnboardingFlow profile={profileResult.profile} status={onboardingStatus} />

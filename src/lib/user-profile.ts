@@ -1,4 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { DiscoveryListing } from "@/lib/learner-discovery";
 
 export type AppUserProfile = {
   id: string;
@@ -127,4 +128,22 @@ export async function fetchProviderListings(supabase: SupabaseClient, providerPr
     .order("updated_at", { ascending: false });
 
   return { data: (data ?? []) as ProviderListing[], error: error?.message ?? null };
+}
+
+export async function fetchPublishedListings(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from("listings")
+    .select("id, type, title, description, category, themes, price, duration_minutes, format, location, capacity, provider_profiles(display_name, profile_photo, roles, bio, languages, activity_area), listing_images(image_url, sort_order), listing_schedules(id, start_at, end_at, capacity)")
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  const listings = (data ?? []).map((listing) => ({
+    ...listing,
+    provider_profiles: Array.isArray(listing.provider_profiles)
+      ? listing.provider_profiles[0] ?? null
+      : listing.provider_profiles,
+  })) as DiscoveryListing[];
+
+  return { data: listings, error: error?.message ?? null };
 }
