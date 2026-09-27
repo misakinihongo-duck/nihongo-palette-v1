@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { AuthPanel } from "@/components/auth-panel";
 import { OnboardingFlow } from "@/components/onboarding-flow";
+import { ProviderServiceCreator } from "@/components/provider-service-creator";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 import { fetchCurrentUserProfile, fetchOnboardingStatus } from "@/lib/user-profile";
@@ -68,7 +69,9 @@ export default async function Home() {
                 {profileResult?.error ? (
                   <p className="rounded-md bg-rose-50 p-3 text-rose-800">{profileResult.error}</p>
                 ) : null}
-                {profileResult?.profile && onboardingStatus ? (
+                {profileResult?.profile && onboardingStatus?.providerProfileId ? (
+                  <ProviderServiceCreator providerProfileId={onboardingStatus.providerProfileId} />
+                ) : profileResult?.profile && onboardingStatus ? (
                   <OnboardingFlow profile={profileResult.profile} status={onboardingStatus} />
                 ) : null}
               </div>

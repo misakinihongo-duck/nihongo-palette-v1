@@ -17,6 +17,7 @@ export type AppUserProfile = {
 export type OnboardingStatus = {
   hasLearnerPreferences: boolean;
   hasProviderProfile: boolean;
+  providerProfileId: string | null;
 };
 
 export async function fetchCurrentUserProfile(supabase: SupabaseClient) {
@@ -96,5 +97,6 @@ export async function fetchOnboardingStatus(supabase: SupabaseClient, userId: st
   return {
     hasLearnerPreferences: Boolean(learnerResult.data),
     hasProviderProfile: Boolean(providerResult.data),
+    providerProfileId: providerResult.data?.id ?? null,
   } satisfies OnboardingStatus;
 }
