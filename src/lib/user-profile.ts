@@ -36,6 +36,26 @@ export async function fetchCurrentUserProfile(supabase: SupabaseClient) {
     .eq("id", user.id)
     .maybeSingle<AppUserProfile>();
 
+  if (!data && !error) {
+    const { error: upsertError } = await upsertUserProfile(supabase, user);
+
+    if (upsertError) {
+      return { user, profile: null, error: upsertError.message };
+    }
+
+    const { data: createdProfile, error: createdProfileError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle<AppUserProfile>();
+
+    return {
+      user,
+      profile: createdProfile ?? null,
+      error: createdProfileError?.message ?? null,
+    };
+  }
+
   return { user, profile: data ?? null, error: error?.message ?? null };
 }
 
