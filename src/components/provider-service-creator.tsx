@@ -10,6 +10,7 @@ type ListingType = "lesson" | "experience" | "local_guide";
 type ListingStatus = "draft" | "published";
 
 type ProviderServiceCreatorProps = {
+  onDone?: () => void;
   providerProfileId: string;
 };
 
@@ -34,7 +35,7 @@ function StepHeader({ current, title }: { current: number; title: string }) {
   );
 }
 
-export function ProviderServiceCreator({ providerProfileId }: ProviderServiceCreatorProps) {
+export function ProviderServiceCreator({ onDone, providerProfileId }: ProviderServiceCreatorProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [message, setMessage] = useState<string | null>(null);
@@ -127,6 +128,7 @@ export function ProviderServiceCreator({ providerProfileId }: ProviderServiceCre
 
     setMessage(status === "published" ? "サービスを公開しました。" : "下書きを保存しました。");
     router.refresh();
+    onDone?.();
   }
 
   if (message && (message === "サービスを公開しました。" || message === "下書きを保存しました。")) {

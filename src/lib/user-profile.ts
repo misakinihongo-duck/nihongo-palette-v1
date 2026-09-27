@@ -20,6 +20,23 @@ export type OnboardingStatus = {
   providerProfileId: string | null;
 };
 
+export type ProviderListing = {
+  capacity: number;
+  duration_minutes: number;
+  id: string;
+  listing_schedules: Array<{
+    capacity: number;
+    end_at: string;
+    id: string;
+    start_at: string;
+  }>;
+  price: number;
+  status: "draft" | "published" | "unpublished";
+  title: string;
+  type: "lesson" | "experience" | "local_guide";
+  updated_at: string;
+};
+
 export async function fetchCurrentUserProfile(supabase: SupabaseClient) {
   const {
     data: { user },
@@ -99,4 +116,15 @@ export async function fetchOnboardingStatus(supabase: SupabaseClient, userId: st
     hasProviderProfile: Boolean(providerResult.data),
     providerProfileId: providerResult.data?.id ?? null,
   } satisfies OnboardingStatus;
+}
+
+export async function fetchProviderListings(supabase: SupabaseClient, providerProfileId: string) {
+  const { data, error } = await supabase
+    .from("listings")
+    .select("id, title, type, status, price, duration_minutes, capacity, updated_at, listing_schedules(id, start_at, end_at, capacity)")
+    .eq("provider_profile_id", providerProfileId)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
+
+  return { data: (data ?? []) as ProviderListing[], error: error?.message ?? null };
 }

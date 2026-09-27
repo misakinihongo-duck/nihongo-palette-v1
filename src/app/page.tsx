@@ -1,10 +1,10 @@
 import Image from "next/image";
 import { AuthPanel } from "@/components/auth-panel";
 import { OnboardingFlow } from "@/components/onboarding-flow";
-import { ProviderServiceCreator } from "@/components/provider-service-creator";
+import { ProviderServiceManager } from "@/components/provider-service-manager";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
-import { fetchCurrentUserProfile, fetchOnboardingStatus } from "@/lib/user-profile";
+import { fetchCurrentUserProfile, fetchOnboardingStatus, fetchProviderListings } from "@/lib/user-profile";
 
 export default async function Home() {
   const config = getSupabaseConfig();
@@ -14,6 +14,10 @@ export default async function Home() {
   const onboardingStatus =
     supabase && profileResult?.user
       ? await fetchOnboardingStatus(supabase, profileResult.user.id)
+      : null;
+  const providerListings =
+    supabase && onboardingStatus?.providerProfileId
+      ? await fetchProviderListings(supabase, onboardingStatus.providerProfileId)
       : null;
 
   return (
@@ -70,7 +74,10 @@ export default async function Home() {
                   <p className="rounded-md bg-rose-50 p-3 text-rose-800">{profileResult.error}</p>
                 ) : null}
                 {profileResult?.profile && onboardingStatus?.providerProfileId ? (
-                  <ProviderServiceCreator providerProfileId={onboardingStatus.providerProfileId} />
+                  <ProviderServiceManager
+                    listings={providerListings?.data ?? []}
+                    providerProfileId={onboardingStatus.providerProfileId}
+                  />
                 ) : profileResult?.profile && onboardingStatus ? (
                   <OnboardingFlow profile={profileResult.profile} status={onboardingStatus} />
                 ) : null}
