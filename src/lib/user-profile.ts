@@ -1,5 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { DiscoveryListing } from "@/lib/learner-discovery";
+import type { LearnerBooking } from "@/lib/learner-bookings";
+import type { AppNotification } from "@/lib/notifications";
 import type { ProviderBooking } from "@/lib/provider-bookings";
 
 export type AppUserProfile = {
@@ -178,4 +180,45 @@ export async function fetchProviderBookings(supabase: SupabaseClient) {
   })) as ProviderBooking[];
 
   return { data: bookings, error: error?.message ?? null };
+}
+
+export async function fetchLearnerBookings(supabase: SupabaseClient) {
+  const { data, error } = await supabase.rpc("get_learner_booking_summaries");
+  const bookings = ((data ?? []) as Array<{
+    booked_price: number;
+    created_at: string;
+    end_at: string;
+    id: string;
+    listing_title: string | null;
+    listing_type: "lesson" | "experience" | "local_guide" | null;
+    message: string | null;
+    party_size: number;
+    provider_display_name: string | null;
+    start_at: string;
+    status: LearnerBooking["status"];
+  }>).map((booking) => ({
+    booked_price: booking.booked_price,
+    created_at: booking.created_at,
+    end_at: booking.end_at,
+    id: booking.id,
+    listing: booking.listing_title && booking.listing_type
+      ? { title: booking.listing_title, type: booking.listing_type }
+      : null,
+    message: booking.message,
+    party_size: booking.party_size,
+    provider: booking.provider_display_name ? { display_name: booking.provider_display_name } : null,
+    start_at: booking.start_at,
+    status: booking.status,
+  })) as LearnerBooking[];
+
+  return { data: bookings, error: error?.message ?? null };
+}
+
+export async function fetchNotifications(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id, type, booking_id, conversation_id, read_at, created_at")
+    .order("created_at", { ascending: false });
+
+  return { data: (data ?? []) as AppNotification[], error: error?.message ?? null };
 }
