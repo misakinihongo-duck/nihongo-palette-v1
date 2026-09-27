@@ -1,5 +1,6 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { DiscoveryListing } from "@/lib/learner-discovery";
+import type { ProviderBooking } from "@/lib/provider-bookings";
 
 export type AppUserProfile = {
   id: string;
@@ -146,4 +147,35 @@ export async function fetchPublishedListings(supabase: SupabaseClient) {
   })) as DiscoveryListing[];
 
   return { data: listings, error: error?.message ?? null };
+}
+
+export async function fetchProviderBookings(supabase: SupabaseClient) {
+  const { data, error } = await supabase.rpc("get_provider_booking_summaries");
+  const bookings = ((data ?? []) as Array<{
+    booked_price: number;
+    created_at: string;
+    end_at: string;
+    id: string;
+    learner_name: string | null;
+    learner_nickname: string | null;
+    listing_title: string | null;
+    listing_type: "lesson" | "experience" | "local_guide" | null;
+    message: string | null;
+    party_size: number;
+    start_at: string;
+    status: ProviderBooking["status"];
+  }>).map((booking) => ({
+    booked_price: booking.booked_price,
+    created_at: booking.created_at,
+    end_at: booking.end_at,
+    id: booking.id,
+    learner: booking.learner_name ? { name: booking.learner_name, nickname: booking.learner_nickname } : null,
+    listing: booking.listing_title ? { title: booking.listing_title, type: booking.listing_type } : null,
+    message: booking.message,
+    party_size: booking.party_size,
+    start_at: booking.start_at,
+    status: booking.status,
+  })) as ProviderBooking[];
+
+  return { data: bookings, error: error?.message ?? null };
 }

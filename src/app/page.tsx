@@ -4,7 +4,7 @@ import { AuthPanel } from "@/components/auth-panel";
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
-import { fetchCurrentUserProfile, fetchOnboardingStatus, fetchProviderListings, fetchPublishedListings } from "@/lib/user-profile";
+import { fetchCurrentUserProfile, fetchOnboardingStatus, fetchProviderBookings, fetchProviderListings, fetchPublishedListings } from "@/lib/user-profile";
 
 export default async function Home() {
   const config = getSupabaseConfig();
@@ -18,6 +18,10 @@ export default async function Home() {
   const providerListings =
     supabase && onboardingStatus?.providerProfileId
       ? await fetchProviderListings(supabase, onboardingStatus.providerProfileId)
+      : null;
+  const providerBookings =
+    supabase && onboardingStatus?.providerProfileId
+      ? await fetchProviderBookings(supabase)
       : null;
   const publishedListings = supabase && profileResult?.user ? await fetchPublishedListings(supabase) : null;
 
@@ -78,6 +82,7 @@ export default async function Home() {
                   <AppWorkspace
                     canUseLearner={onboardingStatus.hasLearnerPreferences}
                     initialMode={onboardingStatus.providerProfileId && profileResult.profile.last_active_mode === "provider" ? "provider" : "learner"}
+                    providerBookings={providerBookings?.data ?? []}
                     providerListings={providerListings?.data ?? []}
                     providerProfileId={onboardingStatus.providerProfileId}
                     publishedListings={publishedListings?.data ?? []}
