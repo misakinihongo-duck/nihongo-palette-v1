@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { validateBookingDraft, type BookingDraft } from "@/lib/booking";
 import {
   experienceThemes,
   filterDiscoveryListings,
@@ -8,6 +10,7 @@ import {
   upcomingSchedules,
   type DiscoveryListing,
 } from "@/lib/learner-discovery";
+import { createClient } from "@/lib/supabase/client";
 
 type LearnerDiscoveryProps = {
   listings: DiscoveryListing[];
@@ -25,9 +28,14 @@ function formatSchedule(startAt: string, endAt: string) {
 }
 
 export function LearnerDiscovery({ listings }: LearnerDiscoveryProps) {
+  const router = useRouter();
   const [view, setView] = useState<"learn" | "experience">("learn");
   const [filter, setFilter] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<DiscoveryListing | null>(null);
+  const [bookingStep, setBookingStep] = useState<"form" | "confirm" | "success" | null>(null);
+  const [bookingMessage, setBookingMessage] = useState<string | null>(null);
+  const [bookingDraft, setBookingDraft] = useState<BookingDraft>({ message: "", partySize: "1", scheduleId: null });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const filters = view === "learn" ? learnPurposes : experienceThemes;
   const visibleListings = useMemo(
     () => filterDiscoveryListings(listings, view, filter),
@@ -40,9 +48,59 @@ export function LearnerDiscovery({ listings }: LearnerDiscoveryProps) {
     setView(nextView);
   }
 
+  function beginBooking() {
+    setBookingDraft({ message: "", partySize: "1", scheduleId: null });
+    setBookingMessage(null);
+    setBookingStep("form");
+  }
+
+  function selectedSchedule(listing: DiscoveryListing) {
+    return upcomingSchedules(listing).find((schedule) => schedule.id === bookingDraft.scheduleId) ?? null;
+  }
+
+  function continueBooking(listing: DiscoveryListing) {
+    const schedule = selectedSchedule(listing);
+    const validationError = validateBookingDraft(bookingDraft, schedule?.capacity ?? 0);
+    if (validationError) return setBookingMessage(validationError);
+
+    setBookingMessage(null);
+    setBookingStep("confirm");
+  }
+
+  async function submitBooking(listing: DiscoveryListing) {
+    const schedule = selectedSchedule(listing);
+    const validationError = validateBookingDraft(bookingDraft, schedule?.capacity ?? 0);
+    if (validationError) return setBookingMessage(validationError);
+
+    setIsSubmitting(true);
+    setBookingMessage(null);
+    const { error } = await createClient().rpc("create_booking_request", {
+      p_listing_id: listing.id,
+      p_message: bookingDraft.message,
+      p_party_size: Number(bookingDraft.partySize),
+      p_schedule_id: bookingDraft.scheduleId,
+    });
+    setIsSubmitting(false);
+
+    if (error) return setBookingMessage(error.message);
+
+    setBookingStep("success");
+    router.refresh();
+  }
+
   if (selectedListing) {
     const provider = selectedListing.provider_profiles;
     const schedules = upcomingSchedules(selectedListing);
+
+    if (bookingStep === "success") {
+      return <section className="rounded-2xl border border-[#D9E1F5] bg-white p-6"><p className="text-sm font-semibold text-[#6E8FE8]">BOOKING REQUEST SENT</p><h2 className="mt-2 text-2xl font-bold text-[#17203D]">予約リクエストを送りました</h2><p className="mt-3 text-sm leading-7 text-[#42506F]">提供者からの返答をお待ちください。</p><button className="mt-6 h-11 rounded-xl bg-[#6E8FE8] px-5 text-sm font-semibold text-white" onClick={() => { setBookingStep(null); setSelectedListing(null); }} type="button">サービスを探す</button></section>;
+    }
+
+    if (bookingStep) {
+      const selected = selectedSchedule(selectedListing);
+      const isConfirmation = bookingStep === "confirm";
+      return <section aria-labelledby="booking-title" className="grid gap-6"><button className="w-fit text-sm font-semibold text-[#6E8FE8]" onClick={() => { setBookingStep(null); setBookingMessage(null); }} type="button">詳細に戻る</button><div className="rounded-2xl border border-[#D9E1F5] bg-white p-5"><p className="text-sm font-semibold text-[#6E8FE8]">BOOKING {isConfirmation ? "2 / 2" : "1 / 2"}</p><h2 className="mt-2 text-xl font-bold text-[#17203D]" id="booking-title">{isConfirmation ? "予約内容を確認" : "予約リクエスト"}</h2>{isConfirmation ? <dl className="mt-5 grid gap-4 text-sm"><div><dt className="text-[#6B7895]">サービス</dt><dd className="mt-1 font-semibold text-[#17203D]">{selectedListing.title}</dd></div><div><dt className="text-[#6B7895]">日時</dt><dd className="mt-1 font-semibold text-[#17203D]">{selected ? formatSchedule(selected.start_at, selected.end_at) : "-"}</dd></div><div><dt className="text-[#6B7895]">参加人数・料金</dt><dd className="mt-1 font-semibold text-[#17203D]">{bookingDraft.partySize}人 / ¥{(selectedListing.price * Number(bookingDraft.partySize)).toLocaleString()}</dd></div>{bookingDraft.message ? <div><dt className="text-[#6B7895]">メッセージ</dt><dd className="mt-1 whitespace-pre-wrap text-[#17203D]">{bookingDraft.message}</dd></div> : null}</dl> : <div className="mt-5 grid gap-5"><fieldset><legend className="text-sm font-semibold text-[#17203D]">日時</legend><div className="mt-3 grid gap-2">{schedules.map((schedule) => <label className={bookingDraft.scheduleId === schedule.id ? "flex cursor-pointer gap-3 rounded-xl border-2 border-[#6E8FE8] bg-[#EAF0FF] p-3 text-sm text-[#17203D]" : "flex cursor-pointer gap-3 rounded-xl border border-[#D9E1F5] p-3 text-sm text-[#17203D]"} key={schedule.id}><input checked={bookingDraft.scheduleId === schedule.id} className="mt-1 size-4 accent-[#6E8FE8]" name="schedule" onChange={() => setBookingDraft({ ...bookingDraft, scheduleId: schedule.id })} type="radio" />{formatSchedule(schedule.start_at, schedule.end_at)} / 定員 {schedule.capacity}人</label>)}</div></fieldset><label className="text-sm font-semibold text-[#17203D]">参加人数<input className="mt-2 h-11 w-full rounded-xl border border-[#BFCBE8] px-3 text-base" min="1" onChange={(event) => setBookingDraft({ ...bookingDraft, partySize: event.target.value })} type="number" value={bookingDraft.partySize} /></label><label className="text-sm font-semibold text-[#17203D]">メッセージ<span className="ml-1 font-normal text-[#6B7895]">任意</span><textarea className="mt-2 min-h-28 w-full rounded-xl border border-[#BFCBE8] p-3 text-base" maxLength={1000} onChange={(event) => setBookingDraft({ ...bookingDraft, message: event.target.value })} value={bookingDraft.message} /></label></div>}{bookingMessage ? <p aria-live="polite" className="mt-4 text-sm text-[#C95551]">{bookingMessage}</p> : null}<div className="mt-6 flex flex-wrap gap-3">{isConfirmation ? <><button className="h-11 rounded-xl border border-[#6E8FE8] px-4 text-sm font-semibold text-[#476BC7]" disabled={isSubmitting} onClick={() => setBookingStep("form")} type="button">戻る</button><button className="h-11 rounded-xl bg-[#6E8FE8] px-5 text-sm font-semibold text-white disabled:opacity-60" disabled={isSubmitting} onClick={() => void submitBooking(selectedListing)} type="button">{isSubmitting ? "送信中..." : "予約リクエストを送る"}</button></> : <button className="h-11 rounded-xl bg-[#6E8FE8] px-5 text-sm font-semibold text-white" onClick={() => continueBooking(selectedListing)} type="button">内容を確認</button>}</div></div></section>;
+    }
 
     return (
       <section aria-labelledby="listing-detail-title" className="grid gap-6">
@@ -68,6 +126,7 @@ export function LearnerDiscovery({ listings }: LearnerDiscoveryProps) {
               <h3 className="text-base font-bold text-[#17203D]">開催日時</h3>
               {schedules.length ? <ul className="mt-3 grid gap-2">{schedules.map((schedule) => <li className="rounded-xl border border-[#D9E1F5] px-3 py-3 text-sm text-[#17203D]" key={schedule.id}>{formatSchedule(schedule.start_at, schedule.end_at)} / 定員 {schedule.capacity}人</li>)}</ul> : <p className="mt-2 text-sm text-[#6B7895]">現在選べる日時はありません。</p>}
             </div>
+            <button className="h-12 rounded-xl bg-[#6E8FE8] px-5 text-sm font-semibold text-white disabled:opacity-50" disabled={!schedules.length} onClick={beginBooking} type="button">予約する</button>
           </div>
         </div>
       </section>
