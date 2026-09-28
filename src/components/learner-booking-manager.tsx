@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { filterLearnerBookings, type LearnerBooking } from "@/lib/learner-bookings";
 import { createClient } from "@/lib/supabase/client";
 
-type LearnerBookingManagerProps = { bookings: LearnerBooking[] };
+type LearnerBookingManagerProps = {
+  bookings: LearnerBooking[];
+  onOpenConversation: (conversationId: string) => void;
+};
 type Tab = "requests" | "upcoming" | "past";
 
 const labels: Record<Tab, string> = { past: "過去・履歴", requests: "リクエスト", upcoming: "確定済み" };
@@ -22,7 +25,7 @@ function formatDateTime(startAt: string, endAt: string) {
   return `${date} - ${end}`;
 }
 
-export function LearnerBookingManager({ bookings }: LearnerBookingManagerProps) {
+export function LearnerBookingManager({ bookings, onOpenConversation }: LearnerBookingManagerProps) {
   const router = useRouter();
   const [selectedBooking, setSelectedBooking] = useState<LearnerBooking | null>(null);
   const [tab, setTab] = useState<Tab>("requests");
@@ -43,6 +46,17 @@ export function LearnerBookingManager({ bookings }: LearnerBookingManagerProps) 
     router.refresh();
   }
 
+  async function openConversation() {
+    if (!selectedBooking) return;
+    setMessage(null);
+    const { data, error } = await createClient().rpc("get_or_create_conversation", {
+      p_booking_id: selectedBooking.id,
+      p_listing_id: null,
+    });
+    if (error) return setMessage(error.message);
+    onOpenConversation(data as string);
+  }
+
   if (selectedBooking) {
     const canCancel = selectedBooking.status === "confirmed" && new Date(selectedBooking.end_at) >= new Date();
     return (
@@ -59,7 +73,7 @@ export function LearnerBookingManager({ bookings }: LearnerBookingManagerProps) 
             {selectedBooking.message ? <div><dt className="text-[#6B7895]">メッセージ</dt><dd className="mt-1 whitespace-pre-wrap text-[#17203D]">{selectedBooking.message}</dd></div> : null}
           </dl>
           {message ? <p aria-live="polite" className="mt-5 text-sm text-[#42506F]">{message}</p> : null}
-          {canCancel ? <button className="mt-6 h-11 rounded-xl border border-[#F47A6A] px-4 text-sm font-semibold text-[#C95551] disabled:opacity-60" disabled={isCancelling} onClick={() => void cancelBooking()} type="button">{isCancelling ? "キャンセル中..." : "予約をキャンセルする"}</button> : null}
+          <div className="mt-6 flex flex-wrap gap-3"><button className="h-11 rounded-xl border border-[#6E8FE8] px-4 text-sm font-semibold text-[#476BC7]" onClick={() => void openConversation()} type="button">メッセージする</button>{canCancel ? <button className="h-11 rounded-xl border border-[#F47A6A] px-4 text-sm font-semibold text-[#C95551] disabled:opacity-60" disabled={isCancelling} onClick={() => void cancelBooking()} type="button">{isCancelling ? "キャンセル中..." : "予約をキャンセルする"}</button> : null}</div>
         </div>
       </section>
     );

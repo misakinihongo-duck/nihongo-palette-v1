@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { DiscoveryListing } from "@/lib/learner-discovery";
 import type { LearnerBooking } from "@/lib/learner-bookings";
+import type { ConversationSummary } from "@/lib/messaging";
 import type { AppNotification } from "@/lib/notifications";
 import type { ProviderBooking } from "@/lib/provider-bookings";
 
@@ -221,4 +222,29 @@ export async function fetchNotifications(supabase: SupabaseClient) {
     .order("created_at", { ascending: false });
 
   return { data: (data ?? []) as AppNotification[], error: error?.message ?? null };
+}
+
+export async function fetchConversationSummaries(supabase: SupabaseClient) {
+  const { data, error } = await supabase.rpc("get_conversation_summaries");
+  const conversations = ((data ?? []) as Array<{
+    id: string;
+    latest_message: string | null;
+    latest_message_at: string | null;
+    listing_id: string;
+    listing_title: string;
+    other_name: string | null;
+    other_photo: string | null;
+    unread_count: number;
+    updated_at: string;
+  }>).map((conversation) => ({
+    id: conversation.id,
+    latest_message: conversation.latest_message,
+    latest_message_at: conversation.latest_message_at,
+    listing: { id: conversation.listing_id, title: conversation.listing_title },
+    other: { name: conversation.other_name ?? "Nihongo Palette User", photo: conversation.other_photo },
+    unread_count: Number(conversation.unread_count),
+    updated_at: conversation.updated_at,
+  })) as ConversationSummary[];
+
+  return { data: conversations, error: error?.message ?? null };
 }

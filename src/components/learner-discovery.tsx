@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type LearnerDiscoveryProps = {
   listings: DiscoveryListing[];
+  onOpenConversation: (conversationId: string) => void;
 };
 
 const listingTypeLabel = {
@@ -27,7 +28,7 @@ function formatSchedule(startAt: string, endAt: string) {
   return `${formatter.format(new Date(startAt))} - ${new Intl.DateTimeFormat("ja-JP", { timeStyle: "short" }).format(new Date(endAt))}`;
 }
 
-export function LearnerDiscovery({ listings }: LearnerDiscoveryProps) {
+export function LearnerDiscovery({ listings, onOpenConversation }: LearnerDiscoveryProps) {
   const router = useRouter();
   const [view, setView] = useState<"learn" | "experience">("learn");
   const [filter, setFilter] = useState<string | null>(null);
@@ -36,6 +37,7 @@ export function LearnerDiscovery({ listings }: LearnerDiscoveryProps) {
   const [bookingMessage, setBookingMessage] = useState<string | null>(null);
   const [bookingDraft, setBookingDraft] = useState<BookingDraft>({ message: "", partySize: "1", scheduleId: null });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [detailMessage, setDetailMessage] = useState<string | null>(null);
   const filters = view === "learn" ? learnPurposes : experienceThemes;
   const visibleListings = useMemo(
     () => filterDiscoveryListings(listings, view, filter),
@@ -88,6 +90,16 @@ export function LearnerDiscovery({ listings }: LearnerDiscoveryProps) {
     router.refresh();
   }
 
+  async function openConversation(listingId: string) {
+    setDetailMessage(null);
+    const { data, error } = await createClient().rpc("get_or_create_conversation", {
+      p_booking_id: null,
+      p_listing_id: listingId,
+    });
+    if (error) return setDetailMessage(error.message);
+    onOpenConversation(data as string);
+  }
+
   if (selectedListing) {
     const provider = selectedListing.provider_profiles;
     const schedules = upcomingSchedules(selectedListing);
@@ -126,7 +138,8 @@ export function LearnerDiscovery({ listings }: LearnerDiscoveryProps) {
               <h3 className="text-base font-bold text-[#17203D]">開催日時</h3>
               {schedules.length ? <ul className="mt-3 grid gap-2">{schedules.map((schedule) => <li className="rounded-xl border border-[#D9E1F5] px-3 py-3 text-sm text-[#17203D]" key={schedule.id}>{formatSchedule(schedule.start_at, schedule.end_at)} / 定員 {schedule.capacity}人</li>)}</ul> : <p className="mt-2 text-sm text-[#6B7895]">現在選べる日時はありません。</p>}
             </div>
-            <button className="h-12 rounded-xl bg-[#6E8FE8] px-5 text-sm font-semibold text-white disabled:opacity-50" disabled={!schedules.length} onClick={beginBooking} type="button">予約する</button>
+            {detailMessage ? <p aria-live="polite" className="text-sm text-[#C95551]">{detailMessage}</p> : null}
+            <div className="flex flex-wrap gap-3"><button className="h-12 rounded-xl border border-[#6E8FE8] px-5 text-sm font-semibold text-[#476BC7]" onClick={() => void openConversation(selectedListing.id)} type="button">メッセージする</button><button className="h-12 rounded-xl bg-[#6E8FE8] px-5 text-sm font-semibold text-white disabled:opacity-50" disabled={!schedules.length} onClick={beginBooking} type="button">予約する</button></div>
           </div>
         </div>
       </section>
