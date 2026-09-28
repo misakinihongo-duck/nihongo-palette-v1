@@ -4,7 +4,7 @@ import { AuthPanel } from "@/components/auth-panel";
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
-import { fetchConversationSummaries, fetchCurrentUserProfile, fetchLearnerBookings, fetchNotifications, fetchOnboardingStatus, fetchProviderBookings, fetchProviderListings, fetchPublishedListings } from "@/lib/user-profile";
+import { fetchConversationSummaries, fetchCurrentUserProfile, fetchLearnerBookings, fetchLearnerPreferences, fetchNotifications, fetchOnboardingStatus, fetchProviderBookings, fetchProviderListings, fetchProviderProfile, fetchPublishedListings } from "@/lib/user-profile";
 
 export default async function Home() {
   const config = getSupabaseConfig();
@@ -27,6 +27,8 @@ export default async function Home() {
   const notifications = supabase && profileResult?.user ? await fetchNotifications(supabase) : null;
   const conversations = supabase && profileResult?.user ? await fetchConversationSummaries(supabase) : null;
   const publishedListings = supabase && profileResult?.user ? await fetchPublishedListings(supabase) : null;
+  const learnerPreferences = supabase && profileResult?.user ? await fetchLearnerPreferences(supabase, profileResult.user.id) : null;
+  const providerProfile = supabase && profileResult?.user ? await fetchProviderProfile(supabase, profileResult.user.id) : null;
 
   return (
     <main className="min-h-screen bg-[#fbfaf7]">
@@ -86,11 +88,14 @@ export default async function Home() {
                     canUseLearner={onboardingStatus.hasLearnerPreferences}
                     initialMode={onboardingStatus.providerProfileId && profileResult.profile.last_active_mode === "provider" ? "provider" : "learner"}
                     learnerBookings={learnerBookings?.data ?? []}
+                    learnerPreferences={learnerPreferences?.data ?? null}
                     notifications={notifications?.data ?? []}
+                    profile={profileResult.profile}
                     conversations={conversations?.data ?? []}
                     providerBookings={providerBookings?.data ?? []}
                     providerListings={providerListings?.data ?? []}
                     providerProfileId={onboardingStatus.providerProfileId}
+                    providerProfile={providerProfile?.data ?? null}
                     publishedListings={publishedListings?.data ?? []}
                   />
                 ) : profileResult?.profile && onboardingStatus ? (

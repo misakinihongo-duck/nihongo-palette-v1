@@ -6,6 +6,7 @@ import { LearnerDiscovery } from "@/components/learner-discovery";
 import { LearnerHome } from "@/components/learner-home";
 import { MessagingPanel } from "@/components/messaging-panel";
 import { NotificationList } from "@/components/notification-list";
+import { ProfilePanel } from "@/components/profile-panel";
 import { ProviderBookingManager } from "@/components/provider-booking-manager";
 import { ProviderHome } from "@/components/provider-home";
 import { ProviderServiceManager } from "@/components/provider-service-manager";
@@ -14,17 +15,20 @@ import type { LearnerBooking } from "@/lib/learner-bookings";
 import type { ConversationSummary } from "@/lib/messaging";
 import type { AppNotification } from "@/lib/notifications";
 import type { ProviderBooking } from "@/lib/provider-bookings";
-import type { ProviderListing } from "@/lib/user-profile";
+import type { AppUserProfile, LearnerPreferences, ProviderListing, ProviderProfile } from "@/lib/user-profile";
 
 type AppWorkspaceProps = {
   canUseLearner: boolean;
   conversations: ConversationSummary[];
   initialMode: "learner" | "provider";
   learnerBookings: LearnerBooking[];
+  learnerPreferences: LearnerPreferences | null;
   notifications: AppNotification[];
+  profile: AppUserProfile;
   providerBookings: ProviderBooking[];
   providerListings: ProviderListing[];
   providerProfileId: string | null;
+  providerProfile: ProviderProfile | null;
   publishedListings: DiscoveryListing[];
 };
 
@@ -34,6 +38,7 @@ const learnerTabs = [
   ["bookings", "予約"],
   ["messages", "メッセージ"],
   ["notifications", "お知らせ"],
+  ["profile", "プロフィール"],
 ] as const;
 
 const providerTabs = [
@@ -42,6 +47,7 @@ const providerTabs = [
   ["bookings", "予約"],
   ["messages", "メッセージ"],
   ["notifications", "お知らせ"],
+  ["profile", "プロフィール"],
 ] as const;
 
 export function AppWorkspace({
@@ -49,10 +55,13 @@ export function AppWorkspace({
   conversations,
   initialMode,
   learnerBookings,
+  learnerPreferences,
   notifications,
+  profile,
   providerBookings,
   providerListings,
   providerProfileId,
+  providerProfile,
   publishedListings,
 }: AppWorkspaceProps) {
   const [mode, setMode] = useState(initialMode);
@@ -90,19 +99,21 @@ export function AppWorkspace({
           {learnerView === "bookings" ? <LearnerBookingManager bookings={learnerBookings} onOpenConversation={openLearnerConversation} /> : null}
           {learnerView === "messages" ? <MessagingPanel activeConversationId={activeConversationId} conversations={conversations} onConversationChange={setActiveConversationId} /> : null}
           {learnerView === "notifications" ? <NotificationList notifications={notifications} /> : null}
+          {learnerView === "profile" ? <ProfilePanel key="learner-profile" learnerPreferences={learnerPreferences} mode="learner" onOpenProvider={() => { setMode("provider"); setProviderView("profile"); }} profile={profile} providerProfile={providerProfile} /> : null}
         </>
       ) : null}
 
-      {mode === "provider" && providerProfileId ? (
+      {mode === "provider" ? (
         <>
-          <div className="flex flex-wrap gap-2" role="tablist" aria-label="提供者メニュー">
+          {canUseProvider ? <div className="flex flex-wrap gap-2" role="tablist" aria-label="提供者メニュー">
             {providerTabs.map(([view, label]) => <button aria-selected={providerView === view} className={providerView === view ? "border-b-2 border-[#6E8FE8] px-3 pb-2 text-sm font-semibold text-[#17203D]" : "px-3 pb-2 text-sm text-[#6B7895]"} key={view} onClick={() => { setActiveConversationId(null); setProviderView(view); }} role="tab" type="button">{label}</button>)}
-          </div>
-          {providerView === "home" ? <ProviderHome bookings={providerBookings} conversations={conversations} listings={providerListings} onNavigate={setProviderView} /> : null}
-          {providerView === "services" ? <ProviderServiceManager listings={providerListings} providerProfileId={providerProfileId} /> : null}
-          {providerView === "bookings" ? <ProviderBookingManager bookings={providerBookings} onOpenConversation={openProviderConversation} /> : null}
-          {providerView === "messages" ? <MessagingPanel activeConversationId={activeConversationId} conversations={conversations} onConversationChange={setActiveConversationId} /> : null}
-          {providerView === "notifications" ? <NotificationList notifications={notifications} /> : null}
+          </div> : null}
+          {providerView === "home" && canUseProvider ? <ProviderHome bookings={providerBookings} conversations={conversations} listings={providerListings} onNavigate={setProviderView} /> : null}
+          {providerView === "services" && providerProfileId ? <ProviderServiceManager listings={providerListings} providerProfileId={providerProfileId} /> : null}
+          {providerView === "bookings" && canUseProvider ? <ProviderBookingManager bookings={providerBookings} onOpenConversation={openProviderConversation} /> : null}
+          {providerView === "messages" && canUseProvider ? <MessagingPanel activeConversationId={activeConversationId} conversations={conversations} onConversationChange={setActiveConversationId} /> : null}
+          {providerView === "notifications" && canUseProvider ? <NotificationList notifications={notifications} /> : null}
+          {providerView === "profile" || !canUseProvider ? <ProfilePanel key="provider-profile" learnerPreferences={learnerPreferences} mode="provider" onOpenLearner={() => { setMode("learner"); setLearnerView("home"); }} profile={profile} providerProfile={providerProfile} /> : null}
         </>
       ) : null}
     </div>

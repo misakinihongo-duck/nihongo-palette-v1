@@ -25,6 +25,27 @@ export type OnboardingStatus = {
   providerProfileId: string | null;
 };
 
+export type LearnerPreferences = {
+  challenges: string[];
+  people_to_connect: string[];
+  things_to_do: string[];
+};
+
+export type ProviderProfile = {
+  area: string | null;
+  bio: string;
+  display_name: string;
+  experience: string | null;
+  expertise: string[];
+  id: string;
+  languages: string[];
+  profile_photo: string | null;
+  roles: string[];
+  social_url: string | null;
+  user_id: string;
+  website: string | null;
+};
+
 export type ProviderListing = {
   capacity: number;
   duration_minutes: number;
@@ -121,6 +142,26 @@ export async function fetchOnboardingStatus(supabase: SupabaseClient, userId: st
     hasProviderProfile: Boolean(providerResult.data),
     providerProfileId: providerResult.data?.id ?? null,
   } satisfies OnboardingStatus;
+}
+
+export async function fetchLearnerPreferences(supabase: SupabaseClient, userId: string) {
+  const { data, error } = await supabase
+    .from("learner_preferences")
+    .select("things_to_do, people_to_connect, challenges")
+    .eq("user_id", userId)
+    .maybeSingle<LearnerPreferences>();
+
+  return { data: data ?? null, error: error?.message ?? null };
+}
+
+export async function fetchProviderProfile(supabase: SupabaseClient, userId: string) {
+  const { data, error } = await supabase
+    .from("provider_profiles")
+    .select("id, user_id, display_name, profile_photo, roles, languages, area, bio, experience, expertise, website, social_url")
+    .eq("user_id", userId)
+    .maybeSingle<ProviderProfile>();
+
+  return { data: data ?? null, error: error?.message ?? null };
 }
 
 export async function fetchProviderListings(supabase: SupabaseClient, providerProfileId: string) {
