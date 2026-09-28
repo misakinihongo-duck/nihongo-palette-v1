@@ -41,7 +41,7 @@ export default async function Home() {
             width={224}
           />
           <span className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-            Sprint 2
+            Sprint 3
           </span>
         </header>
 
