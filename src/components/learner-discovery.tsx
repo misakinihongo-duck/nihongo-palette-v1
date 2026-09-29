@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 type LearnerDiscoveryProps = {
+  initialView?: "learn" | "experience";
   listings: DiscoveryListing[];
   onOpenConversation: (conversationId: string) => void;
 };
@@ -28,9 +29,9 @@ function formatSchedule(startAt: string, endAt: string) {
   return `${formatter.format(new Date(startAt))} - ${new Intl.DateTimeFormat("ja-JP", { timeStyle: "short" }).format(new Date(endAt))}`;
 }
 
-export function LearnerDiscovery({ listings, onOpenConversation }: LearnerDiscoveryProps) {
+export function LearnerDiscovery({ initialView = "learn", listings, onOpenConversation }: LearnerDiscoveryProps) {
   const router = useRouter();
-  const [view, setView] = useState<"learn" | "experience">("learn");
+  const [view, setView] = useState<"learn" | "experience">(initialView);
   const [filter, setFilter] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<DiscoveryListing | null>(null);
   const [bookingStep, setBookingStep] = useState<"form" | "confirm" | "success" | null>(null);
