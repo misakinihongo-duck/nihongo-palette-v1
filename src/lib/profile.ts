@@ -34,7 +34,6 @@ export function validateLearnerProfile(input: {
   name: string;
   nickname: string;
   peopleToConnect: string;
-  profilePhoto: string;
   thingsToDo: string;
 }) {
   const basicsError = validateLearnerBasics(input);
@@ -43,8 +42,7 @@ export function validateLearnerProfile(input: {
   if (parseList(input.thingsToDo).length === 0) return "やってみたいことを1つ以上入力してください。";
   if (parseList(input.peopleToConnect).length === 0) return "つながりたい人を1つ以上入力してください。";
   if (parseList(input.challenges).length === 0) return "挑戦してみたいことを1つ以上入力してください。";
-
-  return validateOptionalUrl(input.profilePhoto, "プロフィール写真のURL");
+  return null;
 }
 
 export function validateProviderProfile(input: {
@@ -52,7 +50,6 @@ export function validateProviderProfile(input: {
   displayName: string;
   expertise: string;
   languages: string;
-  profilePhoto: string;
   roles: string[];
   socialUrl: string;
   website: string;
@@ -66,9 +63,5 @@ export function validateProviderProfile(input: {
   if (input.roles.length === 0) return "提供できる役割を1つ以上選択してください。";
   if (parseList(input.expertise).length === 0) return "得意分野を1つ以上入力してください。";
 
-  return (
-    validateOptionalUrl(input.profilePhoto, "プロフィール写真のURL") ||
-    validateOptionalUrl(input.website, "Webサイト") ||
-    validateOptionalUrl(input.socialUrl, "SNS")
-  );
+  return validateOptionalUrl(input.website, "Webサイト") || validateOptionalUrl(input.socialUrl, "SNS");
 }

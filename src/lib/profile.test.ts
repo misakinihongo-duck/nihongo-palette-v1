@@ -11,7 +11,6 @@ describe("profile validation", () => {
       name: "Mina",
       nickname: "みな",
       peopleToConnect: "日本語の先生",
-      profilePhoto: "",
       thingsToDo: "日本語会話",
     })).toBeNull();
   });
@@ -24,7 +23,6 @@ describe("profile validation", () => {
       name: "Mina",
       nickname: "みな",
       peopleToConnect: "日本語の先生",
-      profilePhoto: "javascript:alert(1)",
       thingsToDo: "日本語会話",
     })).toContain("挑戦");
     expect(validateOptionalUrl("javascript:alert(1)", "写真")).toContain("http");
@@ -36,7 +34,6 @@ describe("profile validation", () => {
       displayName: "Mina",
       expertise: "日常会話",
       languages: "Japanese, English",
-      profilePhoto: "",
       roles: [],
       socialUrl: "",
       website: "",

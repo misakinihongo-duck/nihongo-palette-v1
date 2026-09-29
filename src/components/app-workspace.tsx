@@ -6,7 +6,7 @@ import { LearnerDiscovery } from "@/components/learner-discovery";
 import { LearnerHome } from "@/components/learner-home";
 import { MessagingPanel } from "@/components/messaging-panel";
 import { NotificationList } from "@/components/notification-list";
-import { ProfilePanel } from "@/components/profile-panel";
+import { ProfileWorkspace } from "@/components/profile-workspace";
 import { ProviderBookingManager } from "@/components/provider-booking-manager";
 import { ProviderHome } from "@/components/provider-home";
 import { ProviderServiceManager } from "@/components/provider-service-manager";
@@ -99,7 +99,7 @@ export function AppWorkspace({
           {learnerView === "bookings" ? <LearnerBookingManager bookings={learnerBookings} onOpenConversation={openLearnerConversation} /> : null}
           {learnerView === "messages" ? <MessagingPanel activeConversationId={activeConversationId} conversations={conversations} onConversationChange={setActiveConversationId} /> : null}
           {learnerView === "notifications" ? <NotificationList notifications={notifications} /> : null}
-          {learnerView === "profile" ? <ProfilePanel key="learner-profile" learnerPreferences={learnerPreferences} mode="learner" onOpenProvider={() => { setMode("provider"); setProviderView("profile"); }} profile={profile} providerProfile={providerProfile} /> : null}
+          {learnerView === "profile" ? <ProfileWorkspace key="learner-profile" learnerPreferences={learnerPreferences} mode="learner" onOpenProvider={() => { setMode("provider"); setProviderView("profile"); }} profile={profile} providerProfile={providerProfile} /> : null}
         </>
       ) : null}
 
@@ -113,7 +113,7 @@ export function AppWorkspace({
           {providerView === "bookings" && canUseProvider ? <ProviderBookingManager bookings={providerBookings} onOpenConversation={openProviderConversation} /> : null}
           {providerView === "messages" && canUseProvider ? <MessagingPanel activeConversationId={activeConversationId} conversations={conversations} onConversationChange={setActiveConversationId} /> : null}
           {providerView === "notifications" && canUseProvider ? <NotificationList notifications={notifications} /> : null}
-          {providerView === "profile" || !canUseProvider ? <ProfilePanel key="provider-profile" learnerPreferences={learnerPreferences} mode="provider" onOpenLearner={() => { setMode("learner"); setLearnerView("home"); }} profile={profile} providerProfile={providerProfile} /> : null}
+          {providerView === "profile" || !canUseProvider ? <ProfileWorkspace key="provider-profile" learnerPreferences={learnerPreferences} mode="provider" onOpenLearner={() => { setMode("learner"); setLearnerView("home"); }} profile={profile} providerProfile={providerProfile} /> : null}
         </>
       ) : null}
     </div>
