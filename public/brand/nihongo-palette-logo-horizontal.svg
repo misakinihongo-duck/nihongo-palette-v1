@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" role="img" aria-labelledby="title desc">
+  <title id="title">Nihongo Palette horizontal logo</title>
+  <desc id="desc">Nihongo Palette wordmark with the abstract blue and coral logo mark.</desc>
+  <rect width="1600" height="420" fill="#FFFFFF"/>
+  <g transform="translate(84 52) scale(.62)">
+  <title id="title">Nihongo Palette logo mark</title>
+  <desc id="desc">Two abstract rounded shapes in primary blue and coral forming a warm conversation palette mark.</desc>
+  <rect width="512" height="512" rx="112" fill="#FFFFFF"/>
+  <path d="M146 144C203 86 301 82 363 139C423 194 428 288 374 350C329 402 257 414 201 385L123 410L148 333C105 277 101 190 146 144Z" fill="#6E8FE8"/>
+  <path d="M212 207C253 166 324 164 369 204C414 244 420 314 381 361C348 401 292 412 250 392L190 411L209 351C176 311 177 241 212 207Z" fill="#F47A6A"/>
+  <circle cx="236" cy="276" r="18" fill="#FFFFFF"/>
+  <circle cx="291" cy="276" r="18" fill="#FFFFFF"/>
+  <path d="M233 324C255 342 292 342 316 322" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+</g>
+  <text x="438" y="202" font-family="Manrope, 'Noto Sans JP', sans-serif" font-size="96" font-weight="800" fill="#17203D">Nihongo Palette</text>
+  <text x="444" y="274" font-family="'Noto Sans JP', Manrope, sans-serif" font-size="34" font-weight="600" fill="#4B5578">日本語レッスンを、もっと人らしく。</text>
+  <path d="M444 310H1046" stroke="#6E8FE8" stroke-width="10" stroke-linecap="round"/>
+  <path d="M1078 310H1210" stroke="#F47A6A" stroke-width="10" stroke-linecap="round"/>
+</svg>
