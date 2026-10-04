@@ -6,7 +6,12 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 import { fetchConversationSummaries, fetchCurrentUserProfile, fetchLearnerBookings, fetchLearnerPreferences, fetchNotifications, fetchOnboardingStatus, fetchProviderBookings, fetchProviderListings, fetchProviderProfile, fetchPublishedListings } from "@/lib/user-profile";
 
-export default async function Home() {
+type HomeProps = {
+  searchParams: Promise<{ auth_error?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const { auth_error: authError } = await searchParams;
   const config = getSupabaseConfig();
   const supabase = await createClient();
   const profileResult = supabase ? await fetchCurrentUserProfile(supabase) : null;
@@ -42,72 +47,41 @@ export default async function Home() {
             src="/brand/nihongo-palette-logo-horizontal.svg"
             width={224}
           />
-          <span className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-            Sprint 3
-          </span>
         </header>
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+        {!isSignedIn ? <section className="grid gap-10 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:py-16">
           <div className="grid gap-5">
-            <div className="grid gap-4">
-              <p className="text-sm font-semibold text-teal-700">Learn → Experience → Connect</p>
-              <h1 className="max-w-3xl text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-                あなたの目的に合う、日本語での時間をつくりましょう。
-              </h1>
-              <p className="max-w-2xl text-base leading-8 text-slate-700">
-                日本語を学ぶことから、体験や人とのつながりへ。まずはあなたに合う使い方を教えてください。
-              </p>
+            <p className="text-sm font-semibold text-[#6E8FE8]">LEARN → EXPERIENCE → CONNECT</p>
+            <h1 className="max-w-3xl text-4xl font-bold leading-tight text-[#17203D] sm:text-5xl">日本語で過ごす時間を、自分らしく。</h1>
+            <p className="max-w-2xl text-base leading-8 text-[#42506F]">先生と学び、街で使い、気になる人とつながる。Nihongo Paletteで、あなたの毎日に合う日本語の時間を見つけましょう。</p>
+            <div className="grid gap-4 border-t border-[#D9E1F5] pt-6 sm:grid-cols-3">
+              <p className="text-sm leading-7 text-[#42506F]"><strong className="block text-[#17203D]">学ぶ</strong>目的に合う先生を探す。</p>
+              <p className="text-sm leading-7 text-[#42506F]"><strong className="block text-[#17203D]">体験する</strong>日本語を使う時間を選ぶ。</p>
+              <p className="text-sm leading-7 text-[#42506F]"><strong className="block text-[#17203D]">つながる</strong>人との会話をはじめる。</p>
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                ["Supabase", config.isConfigured ? "環境変数 OK" : "設定待ち"],
-                ["Auth", isSignedIn ? "Session OK" : "未ログイン"],
-                ["User DB", profileResult?.profile ? "users取得 OK" : "確認待ち"],
-              ].map(([label, value]) => (
-                <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={label}>
-                  <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-                  <p className="mt-2 text-lg font-bold text-slate-950">{value}</p>
-                </div>
-              ))}
-            </div>
-
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-950">{isSignedIn ? "はじめましょう" : "接続確認"}</h2>
-              <div className="mt-4 grid gap-3 text-sm leading-7 text-slate-700">
-                <p>
-                  {isSignedIn
-                    ? `${profileResult?.user?.email ?? "ログインユーザー"}としてログインしています。利用方法を選び、プロフィールを設定しましょう。`
-                    : "Google認証を最終形にしつつ、Email/PasswordでもAuth → User → DBの疎通を確認できます。"}
-                </p>
-                {profileResult?.error ? (
-                  <p className="rounded-md bg-rose-50 p-3 text-rose-800">{profileResult.error}</p>
-                ) : null}
-                {profileResult?.profile && onboardingStatus?.hasLearnerPreferences ? (
-                  <AppWorkspace
-                    canUseLearner={onboardingStatus.hasLearnerPreferences}
-                    initialMode={onboardingStatus.providerProfileId && profileResult.profile.last_active_mode === "provider" ? "provider" : "learner"}
-                    learnerBookings={learnerBookings?.data ?? []}
-                    learnerPreferences={learnerPreferences?.data ?? null}
-                    notifications={notifications?.data ?? []}
-                    profile={profileResult.profile}
-                    conversations={conversations?.data ?? []}
-                    providerBookings={providerBookings?.data ?? []}
-                    providerListings={providerListings?.data ?? []}
-                    providerProfileId={onboardingStatus.providerProfileId}
-                    providerProfile={providerProfile?.data ?? null}
-                    publishedListings={publishedListings?.data ?? []}
-                  />
-                ) : profileResult?.profile && onboardingStatus ? (
-                  <OnboardingFlow profile={profileResult.profile} status={onboardingStatus} />
-                ) : null}
-              </div>
-            </section>
           </div>
-
-          {!isSignedIn ? <AuthPanel isConfigured={config.isConfigured} /> : null}
-        </section>
+          <div className="grid gap-3">
+            {authError ? <p aria-live="polite" className="rounded-lg border border-[#F6D3AF] bg-[#FFF9ED] px-4 py-3 text-sm leading-6 text-[#6B4A25]">ログインを完了できませんでした。もう一度お試しください。</p> : null}
+            <AuthPanel isConfigured={config.isConfigured} />
+          </div>
+        </section> : <section className="grid gap-5">
+          {profileResult?.error ? <p aria-live="polite" className="rounded-lg border border-[#F3C2C0] bg-[#FFF2F1] px-4 py-3 text-sm leading-6 text-[#9B3631]">プロフィールを読み込めませんでした。ページを更新してください。</p> : null}
+          {profileResult?.profile && onboardingStatus?.hasLearnerPreferences ? <AppWorkspace
+            canUseLearner={onboardingStatus.hasLearnerPreferences}
+            initialMode={onboardingStatus.providerProfileId && profileResult.profile.last_active_mode === "provider" ? "provider" : "learner"}
+            learnerBookings={learnerBookings?.data ?? []}
+            learnerPreferences={learnerPreferences?.data ?? null}
+            notifications={notifications?.data ?? []}
+            profile={profileResult.profile}
+            conversations={conversations?.data ?? []}
+            providerBookings={providerBookings?.data ?? []}
+            providerListings={providerListings?.data ?? []}
+            providerProfileId={onboardingStatus.providerProfileId}
+            providerProfile={providerProfile?.data ?? null}
+            publishedListings={publishedListings?.data ?? []}
+          /> : profileResult?.profile && onboardingStatus ? <OnboardingFlow profile={profileResult.profile} status={onboardingStatus} /> : null}
+        </section>}
       </div>
-      </main>
+    </main>
   );
 }

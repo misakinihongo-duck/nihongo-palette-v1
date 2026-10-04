@@ -5,22 +5,44 @@ import { upsertUserProfile } from "@/lib/user-profile";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/";
+  const requestedNext = requestUrl.searchParams.get("next") ?? "/";
+  const next = requestedNext.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
 
-  if (code) {
-    const supabase = await createClient();
+  if (!code) {
+    return redirectToAuthError(requestUrl);
+  }
 
-    if (supabase) {
-      await supabase.auth.exchangeCodeForSession(code);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  const supabase = await createClient();
 
-      if (user) {
-        await upsertUserProfile(supabase, user);
-      }
-    }
+  if (!supabase) {
+    return redirectToAuthError(requestUrl);
+  }
+
+  const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (sessionError) {
+    return redirectToAuthError(requestUrl);
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirectToAuthError(requestUrl);
+  }
+
+  const { error: profileError } = await upsertUserProfile(supabase, user);
+
+  if (profileError) {
+    return redirectToAuthError(requestUrl);
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin));
+}
+
+function redirectToAuthError(requestUrl: URL) {
+  const redirectUrl = new URL("/", requestUrl.origin);
+  redirectUrl.searchParams.set("auth_error", "1");
+  return NextResponse.redirect(redirectUrl);
 }
